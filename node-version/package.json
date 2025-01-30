@@ -1,0 +1,21 @@
+{
+  "name": "applemusic-spotify-link-node",
+  "version": "1.0.0",
+  "description": "Node.js version of AppleMusic-Spotify Link Converter",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=packages/backend & npm run dev --workspace=packages/frontend",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces"
+  },
+  "keywords": [
+    "spotify",
+    "apple-music",
+    "music-converter"
+  ],
+  "author": "",
+  "license": "MIT"
+}

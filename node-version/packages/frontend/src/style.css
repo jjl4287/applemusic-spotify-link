@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-purple: #8B5CF6;
+  --primary-purple-light: #A78BFA;
+  --secondary-purple: #7C3AED;
+  --secondary-purple-dark: #6D28D9;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.font-playfair {
+  font-family: 'Playfair Display', serif;
+}
+
+.font-mono {
+  font-family: 'Fira Code', monospace;
+}
