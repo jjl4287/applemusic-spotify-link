@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 py-8">
+  <div class="min-h-screen bg-gradient-to-br from-[#2C2824] to-[#1A1816] py-8 transition-all duration-300">
     <div class="container max-w-5xl mx-auto px-[clamp(1rem,4vw,2rem)]">
       <div class="backdrop-blur-xl bg-white/10 rounded-2xl shadow-lg p-8 mb-8 border border-white/10">
-        <h1 class="text-3xl font-bold text-left text-white mb-8 font-decorative">Convert Music Links</h1>
+        <h1 class="text-4xl font-bold text-left text-white mb-8 font-playfair">Convert Music Links</h1>
         <div class="flex gap-[clamp(1rem,2vw,1.5rem)] mb-[clamp(1.5rem,3vw,2rem)]">
           <input 
             v-model="appleUrl" 
@@ -14,58 +14,95 @@
           <button 
             @click="convertLink" 
             :disabled="isLoading"
-            class="hover-transform click-effect px-6 py-3 bg-primary-purple/80 text-white rounded-xl hover:bg-primary-purple-light/80 disabled:bg-white/5 disabled:text-white/30 disabled:cursor-not-allowed transition-colors font-medium backdrop-blur-sm border border-white/10 font-mono"
+            class="hover-transform click-effect shadow-button px-6 py-3 bg-primary-purple/80 text-white rounded-xl hover:bg-primary-purple-light/80 disabled:bg-white/5 disabled:text-white/30 disabled:cursor-not-allowed transition-colors font-medium backdrop-blur-sm border border-white/10 font-mono"
           >
             {{ isLoading ? 'Converting...' : 'Convert' }}
           </button>
         </div>
 
-        <div v-if="result" class="backdrop-blur-md bg-white/5 rounded-xl p-6 border border-white/10 fade-in">
-          <div class="flex gap-[clamp(1.5rem,3vw,2rem)]">
-            <img v-if="result.album_art" :src="result.album_art" :alt="result.title" class="w-64 h-64 object-cover rounded-lg shadow-xl" />
-            <div class="flex-1 flex flex-col">
-              <div class="flex-1">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-2xl font-medium text-white">{{ result.title }} by {{ result.artist }}</h3>
-                  <span class="px-3 py-1 bg-white/10 rounded-full text-white/80 text-sm uppercase tracking-wide">{{ result.content_type }}</span>
+        <transition
+          enter-active-class="transition-all duration-500 ease-out"
+          enter-from-class="opacity-0 transform translate-y-4"
+          enter-to-class="opacity-100 transform translate-y-0"
+          leave-active-class="transition-all duration-300 ease-in"
+          leave-from-class="opacity-100 transform translate-y-0"
+          leave-to-class="opacity-0 transform translate-y-4"
+        >
+          <div v-if="result" class="backdrop-blur-md bg-white/5 rounded-xl p-6 border border-white/10 mb-8">
+            <div class="flex gap-[clamp(1.5rem,3vw,2rem)]">
+              <img v-if="result.album_art" :src="result.album_art" :alt="result.title" class="w-64 h-64 object-cover rounded-lg shadow-xl" />
+              <div class="flex-1 flex flex-col">
+                <div class="flex-1">
+                  <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-2xl font-medium text-white font-playfair">{{ result.content_type === 'artist' ? result.artist : `${result.title} by ${result.artist}` }}</h3>
+                    <span class="px-3 py-1 bg-white/10 rounded-full text-white/80 text-sm uppercase tracking-wide">{{ result.content_type }}</span>
+                  </div>
+                  <div v-if="result.content_type !== 'artist' && result.album" class="text-white/70 mb-2 text-lg">Album: {{ result.album }}</div>
+                  <div v-if="result.content_type !== 'artist' && result.release_date" class="text-white/70 mb-4 text-lg">Released: {{ new Date(result.release_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}</div>
+                  <div v-if="result.content_type === 'artist' && result.genres && result.genres.length" class="text-white/70 mb-4 text-lg">Genres: {{ result.genres.join(', ') }}</div>
                 </div>
-                <div v-if="result.album" class="text-white/70 mb-2">Album: {{ result.album }}</div>
-                <div v-if="result.release_date" class="text-white/70 mb-4">Released: {{ new Date(result.release_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}</div>
-              </div>
-              <div v-if="!result.error" class="flex gap-4">
-                <a 
-                  :href="result.spotify_url" 
-                  target="_blank" 
-                  rel="noopener"
-                  class="flex-1 px-6 py-3 bg-primary-purple/80 text-white rounded-xl hover:bg-primary-purple-light/80 transition-colors text-center font-medium backdrop-blur-sm border border-white/10"
-                >
-                  Open in Spotify
-                </a>
-                <button 
-                  @click="copyToClipboard"
-                  class="px-6 py-3 bg-secondary-purple/80 text-white rounded-xl hover:bg-secondary-purple-dark/80 transition-colors font-medium backdrop-blur-sm border border-white/10"
-                >
-                  Copy Link
-                </button>
-              </div>
-              <div v-else class="text-red-600 text-sm">
-                {{ result.error }}
+                <div v-if="!result.error" class="flex gap-4">
+                  <a 
+                    :href="result.spotify_url" 
+                    target="_blank" 
+                    rel="noopener"
+                    class="flex-1 shadow-button px-6 py-3 bg-primary-purple/80 text-white rounded-xl hover:bg-primary-purple-light/80 transition-colors text-center font-medium backdrop-blur-sm border border-white/10"
+                  >
+                    Open in Spotify
+                  </a>
+                  <button 
+                    @click="copyToClipboard"
+                    class="shadow-button px-6 py-3 bg-secondary-purple/80 text-white rounded-xl hover:bg-secondary-purple-dark/80 transition-colors font-medium backdrop-blur-sm border border-white/10"
+                  >
+                    Copy Link
+                  </button>
+                </div>
+                <div v-else class="text-red-600 text-sm">
+                  {{ result.error }}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </transition>
 
+      <transition
+        enter-active-class="transition-all duration-500 ease-out"
+        enter-from-class="opacity-0 transform translate-y-4"
+        enter-to-class="opacity-100 transform translate-y-0"
+        leave-active-class="transition-all duration-300 ease-in"
+        leave-from-class="opacity-100 transform translate-y-0"
+        leave-to-class="opacity-0 transform translate-y-4"
+      >
         <div v-if="error" class="text-red-600 bg-red-50 rounded-xl p-4 mb-6">
           {{ error }}
         </div>
-      </div>
+      </transition>
+
 
       <!-- Conversion History -->
-      <div v-if="history.length > 0" class="backdrop-blur-xl bg-white/10 rounded-2xl shadow-lg p-8 border border-white/10">
-        <h2 class="text-2xl font-semibold mb-6 text-white font-mono">Conversion History</h2>
-        <div class="space-y-4">
+      <transition
+        enter-active-class="transition-all duration-500 ease-out"
+        enter-from-class="opacity-0 transform translate-y-4"
+        enter-to-class="opacity-100 transform translate-y-0"
+        leave-active-class="transition-all duration-300 ease-in"
+        leave-from-class="opacity-100 transform translate-y-0"
+        leave-to-class="opacity-0 transform translate-y-4"
+      >
+        <div v-if="history.length > 0 && result" class="backdrop-blur-xl bg-white/10 rounded-2xl shadow-lg p-8 border border-white/10">
+          <h2 class="text-3xl font-bold mb-6 text-white font-playfair">Conversion History</h2>
+          <transition-group
+            tag="div"
+            class="space-y-4"
+            enter-active-class="transition-all duration-500 ease-out"
+            enter-from-class="opacity-0 transform translate-y-4"
+            enter-to-class="opacity-100 transform translate-y-0"
+            leave-active-class="transition-all duration-300 ease-in"
+            leave-from-class="opacity-100 transform translate-y-0"
+            leave-to-class="opacity-0 transform translate-y-4"
+            move-class="transition-transform duration-500"
+          >
           <div 
-            v-for="(item, index) in history" 
+            v-for="(item, index) in history.slice(1)" 
             :key="index"
             class="backdrop-blur-md bg-white/5 rounded-xl p-6 border border-white/10"
           >
@@ -74,24 +111,27 @@
               <div class="flex-1 flex flex-col">
                 <div class="flex-1">
                   <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-2xl font-medium text-white">{{ item.title }} by {{ item.artist }}</h3>
+                    <h3 class="text-2xl font-medium text-white font-playfair">
+                      {{ item.content_type === 'artist' ? item.artist : `${item.title} by ${item.artist}` }}
+                    </h3>
                     <span class="px-3 py-1 bg-white/10 rounded-full text-white/80 text-sm uppercase tracking-wide">{{ item.content_type }}</span>
                   </div>
-                  <div v-if="item.album" class="text-white/70 mb-2">Album: {{ item.album }}</div>
-                  <div v-if="item.release_date" class="text-white/70 mb-4">Released: {{ new Date(item.release_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}</div>
+                  <div v-if="item.content_type !== 'artist' && item.album" class="text-white/70 mb-2 text-lg">Album: {{ item.album }}</div>
+                  <div v-if="item.content_type !== 'artist' && item.release_date" class="text-white/70 mb-4 text-lg">Released: {{ new Date(item.release_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}</div>
+                  <div v-if="item.content_type === 'artist' && item.genres && item.genres.length" class="text-white/70 mb-4 text-lg">Genres: {{ item.genres.join(', ') }}</div>
                 </div>
                 <div v-if="!item.error" class="flex gap-4">
                   <a 
                     :href="item.spotify_url" 
                     target="_blank" 
                     rel="noopener"
-                    class="flex-1 px-6 py-3 bg-primary-purple/80 text-white rounded-xl hover:bg-primary-purple-light/80 transition-colors text-center font-medium backdrop-blur-sm border border-white/10"
+                    class="flex-1 shadow-button px-6 py-3 bg-primary-purple/80 text-white rounded-xl hover:bg-primary-purple-light/80 transition-colors text-center font-medium backdrop-blur-sm border border-white/10"
                   >
                     Open in Spotify
                   </a>
                   <button 
                     @click="() => copyHistoryLink(item.spotify_url)" 
-                    class="px-6 py-3 bg-secondary-purple/80 text-white rounded-xl hover:bg-secondary-purple-dark/80 transition-colors font-medium backdrop-blur-sm border border-white/10"
+                    class="shadow-button px-6 py-3 bg-secondary-purple/80 text-white rounded-xl hover:bg-secondary-purple-dark/80 transition-colors font-medium backdrop-blur-sm border border-white/10"
                   >
                     Copy Link
                   </button>
@@ -102,14 +142,16 @@
               </div>
             </div>
           </div>
+          </transition-group>
         </div>
+      </transition>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useMotion } from '@vueuse/motion'
 import '@fontsource/playfair-display/400.css'
@@ -124,37 +166,49 @@ export default {
     const result = ref(null)
     const error = ref('')
     const isLoading = ref(false)
-    const history = ref(JSON.parse(localStorage.getItem('conversionHistory') || '[]'))
+    const history = ref([])
+
+    // Load history when component is mounted
+    onMounted(() => {
+      const savedHistory = localStorage.getItem('conversionHistory')
+      if (savedHistory) {
+        history.value = JSON.parse(savedHistory)
+      }
+    })
 
     const saveHistory = () => {
       localStorage.setItem('conversionHistory', JSON.stringify(history.value))
     }
 
-    const convertLink = async () => {
+    const convertLink = async (e) => {
+      // Prevent default form submission if event exists
+      if (e) e.preventDefault();
+      
       if (!appleUrl.value) {
-        error.value = 'Please enter an Apple Music URL'
-        return
+        error.value = 'Please enter an Apple Music URL';
+        return;
       }
-
-      isLoading.value = true
-      error.value = ''
-      result.value = null
-
+      
+      isLoading.value = true;
+      error.value = '';
+      
       try {
-        const response = await axios.post('http://localhost:8000/convert', {
+        const baseURL = import.meta.env.PROD ? 'https://jakoblangtry.com' : 'http://localhost:8000';
+        const response = await axios.post(`${baseURL}/convert`, {
           apple_music_url: appleUrl.value
-        })
-        result.value = response.data
-        if (result.value) {
-          history.value.unshift({ ...result.value })
-          saveHistory()
+        });
+        result.value = response.data;
+      
+        if (result.value && !result.value.error) {
+          history.value.unshift(result.value);
+          saveHistory();
         }
-      } catch (e) {
-        error.value = e.response?.data?.detail || 'An error occurred'
+      } catch (err) {
+        error.value = 'An error occurred during conversion';
       } finally {
-        isLoading.value = false
+        isLoading.value = false;
       }
-    }
+    };
 
     const copyToClipboard = () => {
       if (result.value?.spotify_url) {
@@ -182,7 +236,6 @@ export default {
 
 <style>
 /* Using @fontsource packages instead of Google Fonts */
-
 :root {
   --primary-purple: #9d4edd;
   --primary-purple-light: #b589df;
@@ -193,6 +246,12 @@ export default {
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.font-playfair {
+  font-family: 'Playfair Display', serif;
+  font-feature-settings: "liga" 1, "dlig" 1;
+  text-rendering: optimizeLegibility;
+}
 
 .backdrop-blur-xl {
   backdrop-filter: blur(20px);
@@ -206,6 +265,16 @@ export default {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
 }
 
+.shadow-button {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.shadow-button:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
 .font-serif {
   font-family: 'Sorts Mill Goudy', serif;
   font-feature-settings: "liga" 1, "dlig" 1, "swsh" 1;
@@ -216,13 +285,13 @@ export default {
   font-family: "Fira Code", "Fira Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
+@keyframes fadeInSmooth {
+  from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.fade-in {
-  animation: fadeIn 0.6s ease-out;
+.fade-in-smooth {
+  animation: fadeInSmooth 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .hover-transform {

@@ -26,10 +26,16 @@ async def convert_link(request: ConversionRequest):
     
     content_type, title, artist = get_apple_music_info(request.apple_music_url)
     
-    if not title or not artist:
+    if not artist:
         raise HTTPException(status_code=404, detail="Could not extract information from Apple Music")
     
-    spotify_data = search_spotify(title, artist, content_type)
+    if content_type == 'artist':
+        title = artist  # For artists, use the artist name as the title
+        spotify_data = search_spotify(artist, artist, content_type)  # Search using artist name for both parameters
+    else:
+        if not title:
+            raise HTTPException(status_code=404, detail="Could not extract title from Apple Music")
+        spotify_data = search_spotify(title, artist, content_type)
     
     if not spotify_data:
         return ConversionResponse(

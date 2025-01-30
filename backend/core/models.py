@@ -13,3 +13,4 @@ class ConversionResponse(BaseModel):
     album_art: Optional[str] = None
     album: Optional[str] = None
     release_date: Optional[str] = None
+    genres: Optional[list[str]] = None

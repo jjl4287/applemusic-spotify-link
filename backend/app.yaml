@@ -1,0 +1,27 @@
+runtime: python39
+entrypoint: gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app
+
+service: default
+env: standard
+
+handlers:
+- url: /.*
+  script: auto
+
+env_variables:
+  PYTHON_ENV: "production"
+  SPOTIFY_CLIENT_ID: "${SPOTIFY_CLIENT_ID}"
+  SPOTIFY_CLIENT_SECRET: "${SPOTIFY_CLIENT_SECRET}"
+
+automatic_scaling:
+  target_cpu_utilization: 0.65
+  min_instances: 1
+  max_instances: 10
+
+instance_class: F1
+
+readiness_check:
+  app_start_timeout_sec: 300
+
+includes:
+- requirements.txt

@@ -33,6 +33,8 @@ h1, h2, h3, h4, h5, h6 {
   font-variant-ligatures: common-ligatures discretionary-ligatures historical-ligatures;
   text-rendering: optimizeLegibility;
   letter-spacing: -0.02em;
+  font-weight: normal;
+  color: var(--secondary-brown);
 }
 
 /* Decorative text styles */
@@ -50,4 +52,19 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'Fira Code', monospace;
   font-feature-settings: "liga" 1, "calt" 1;
   text-rendering: optimizeLegibility;
+}
+
+:root {
+  --primary-beige: #D5C4A1;
+  --primary-beige-light: #E6D5B8;
+  --secondary-brown: #8B7355;
+  --secondary-brown-dark: #5C4033;
+  --backdrop: rgba(213, 196, 161, 0.1);
+  --card-bg: rgba(230, 213, 184, 0.85);
+}
+
+.card {
+  background: var(--card-bg);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }

@@ -20,37 +20,50 @@ def get_apple_music_info(url):
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
         
+        print(f"Processing Apple Music URL: {url}")
+        print(f"Response status code: {response.status_code}")
+        
         # Determine content type from URL
         if '/artist/' in url:
             content_type = 'artist'
-        else:
-            content_type = 'album' if '?i=' not in url else 'track'
-        
-        title_elem = soup.find('meta', property='og:title')
-        artist_elem = soup.find('meta', property='music:musician')
-        
-        if content_type == 'artist':
             title_elem = soup.find('meta', property='og:title')
             if title_elem:
-                # Extract just the artist name without any duplicates
+                # Extract just the artist name
                 artist = clean_title(title_elem['content'].split(' on Apple')[0].strip())
-                # Remove any 'by artist' pattern if present
-                if ' by ' in artist:
-                    artist = artist.split(' by ')[0].strip()
-                return content_type, artist, artist
-        elif title_elem and artist_elem:
-            full_title = title_elem['content'].split(' on Apple')[0].strip()
-            title = full_title.split(' by ')[0].strip()
-            artist = full_title.split(' by ')[1].strip()
+                print(f"Found artist: {artist}")
+                # For artists, we only need the artist name
+                return content_type, None, artist
+            else:
+                print("Could not find artist name in meta tags")
+        else:
+            content_type = 'album' if '?i=' not in url else 'track'
+            title_elem = soup.find('meta', property='og:title')
+            artist_elem = soup.find('meta', property='music:musician')
             
-            # Clean titles by removing parenthetical information
-            title = clean_title(title)
-            artist = clean_title(artist)
+            print(f"Content type determined as: {content_type}")
+            print(f"Title element found: {title_elem is not None}")
+            print(f"Artist element found: {artist_elem is not None}")
             
-            return content_type, title, artist
+            if title_elem and artist_elem:
+                full_title = title_elem['content'].split(' on Apple')[0].strip()
+                title = full_title.split(' by ')[0].strip()
+                artist = full_title.split(' by ')[1].strip()
+                
+                # Clean titles by removing parenthetical information
+                title = clean_title(title)
+                artist = clean_title(artist)
+                
+                print(f"Extracted title: {title}")
+                print(f"Extracted artist: {artist}")
+                
+                return content_type, title, artist
+            else:
+                print("Could not find title or artist in meta tags")
+        
         return None, None, None
     except Exception as e:
         print(f"Error fetching Apple Music info: {e}")
+        print(f"Response content: {response.text if 'response' in locals() else 'No response'}")
         return None, None, None
 
 def search_spotify(title, artist, content_type='track'):
@@ -69,11 +82,12 @@ def search_spotify(title, artist, content_type='track'):
         
         # Search query
         if content_type == 'artist':
-            # For artist searches, use a single clean artist name
-            query = f'artist:"{artist}"'
+            # For artist searches, we only search by artist name
+            query = artist
+            search_type = 'artist'
         else:
             query = f"{title} artist:{artist}"
-        search_type = content_type
+            search_type = content_type
         
         results = sp.search(q=query, type=search_type, limit=10)
         items = results[f"{search_type}s"]["items"]
@@ -88,8 +102,7 @@ def search_spotify(title, artist, content_type='track'):
         for item in items:
             if content_type == 'artist':
                 item_name = clean_title(item["name"])
-                name_sim = similarity(artist.lower(), item_name.lower())
-                combined_sim = name_sim
+                combined_sim = similarity(artist.lower(), item_name.lower())
             else:
                 item_title = clean_title(item["name"])
                 item_artist = clean_title(item["artists"][0]["name"])
@@ -101,21 +114,38 @@ def search_spotify(title, artist, content_type='track'):
                 highest_similarity = combined_sim
                 best_match = item
         
-        # More lenient similarity threshold for artist searches and classical music
-        similarity_threshold = 0.3 if content_type == 'artist' else (0.4 if 'classical' in query.lower() else 0.6)
+        # More lenient similarity threshold for artist searches
+        similarity_threshold = 0.3 if content_type == 'artist' else 0.6
         
         if best_match and highest_similarity > similarity_threshold:
             spotify_url = best_match["external_urls"]["spotify"]
-            album_art = best_match["album"]["images"][0]["url"] if content_type == "track" else best_match["images"][0]["url"]
-            album = best_match["album"]["name"] if content_type == "track" else None
-            release_date = best_match["album"]["release_date"] if content_type == "track" else best_match["release_date"]
+            
+            if content_type == 'artist':
+                album_art = best_match["images"][0]["url"] if "images" in best_match else None
+                genres = best_match.get("genres", [])
+                # Add genres or any other artist-specific metadata
+                return {
+                    "url": spotify_url,
+                    "album_art": album_art,
+                    "genres": genres,
+                    "album": None,
+                    "release_date": None
+                }
+            elif content_type == 'track':
+                album_art = best_match["album"]["images"][0]["url"]
+                album = best_match["album"]["name"]
+                release_date = best_match["album"]["release_date"]
+            else:  # album
+                album_art = best_match["images"][0]["url"]
+                album = best_match["name"]
+                release_date = best_match["release_date"]
             
             return {
-                "url": spotify_url,
-                "album_art": album_art,
-                "album": album,
-                "release_date": release_date
-            }
+                    "url": spotify_url,
+                    "album_art": album_art,
+                    "album": album,
+                    "release_date": release_date
+                }
         
         return None
     except Exception as e:
