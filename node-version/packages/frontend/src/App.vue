@@ -177,6 +177,9 @@ const saveHistory = () => {
   localStorage.setItem('conversionHistory', JSON.stringify(history.value))
 }
 
+// Configure axios base URL
+axios.defaults.baseURL = 'https://backend-967436713449.us-central1.run.app'
+
 const convertLink = async (e) => {
   if (e) e.preventDefault()
   
