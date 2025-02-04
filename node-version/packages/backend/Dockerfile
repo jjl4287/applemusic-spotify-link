@@ -14,7 +14,7 @@ COPY . .
 # Expose port
 EXPOSE 8080
 
-# Set environment variables
+# Set production environment
 ENV NODE_ENV=production
 
 # Start the application

@@ -1,16 +1,31 @@
 import SpotifyWebApi from 'spotify-web-api-node';
+import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 
 class SpotifyService {
   constructor() {
-    console.log('Initializing Spotify service with client ID:', process.env.SPOTIFY_CLIENT_ID);
-    this.spotifyApi = new SpotifyWebApi({
-      clientId: process.env.SPOTIFY_CLIENT_ID,
-      clientSecret: process.env.SPOTIFY_CLIENT_SECRET
-    });
+    this.spotifyApi = null;
+    this.secretManagerClient = new SecretManagerServiceClient();
   }
 
   async initialize() {
     try {
+      // Fetch secrets from Google Cloud Secret Manager
+      const [clientIdResponse] = await this.secretManagerClient.accessSecretVersion({
+        name: 'projects/apple-music-to-spotify/secrets/spotify-client-id/versions/1'
+      });
+      const [clientSecretResponse] = await this.secretManagerClient.accessSecretVersion({
+        name: 'projects/apple-music-to-spotify/secrets/spotify-client-secret/versions/1'
+      });
+
+      const clientId = clientIdResponse.payload.data.toString();
+      const clientSecret = clientSecretResponse.payload.data.toString();
+
+      console.log('Initializing Spotify service with client ID from Secret Manager');
+      this.spotifyApi = new SpotifyWebApi({
+        clientId,
+        clientSecret
+      });
+
       const data = await this.spotifyApi.clientCredentialsGrant();
       this.spotifyApi.setAccessToken(data.body.access_token);
       console.log('Successfully initialized Spotify service');
