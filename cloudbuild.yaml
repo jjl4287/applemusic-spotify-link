@@ -60,7 +60,6 @@ steps:
 substitutions:
   _REGION: us-central1
   _REPOSITORY: applemusic-spotify-link
-  PROJECT_ID: apple-music-to-spotify
 
 serviceAccount: 'projects/${PROJECT_ID}/serviceAccounts/github-actions@${PROJECT_ID}.iam.gserviceaccount.com'
 
