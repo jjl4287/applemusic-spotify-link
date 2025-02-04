@@ -17,7 +17,7 @@ steps:
 
   # Build the frontend image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/frontend', '.']
+    args: ['build', '-t', 'gcr.io/${PROJECT_ID}/frontend', '.']
     dir: 'packages/frontend'
 
   # Push the backend image
@@ -26,7 +26,7 @@ steps:
 
   # Push the frontend image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/frontend']
+    args: ['push', 'gcr.io/${PROJECT_ID}/frontend']
 
   # Deploy backend service to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -51,7 +51,7 @@ steps:
       - 'run'
       - 'deploy'
       - 'frontend'
-      - '--image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/frontend'
+      - '--image=gcr.io/${PROJECT_ID}/frontend'
       - '--region=${_REGION}'
       - '--platform=managed'
       - '--allow-unauthenticated'
@@ -61,11 +61,11 @@ substitutions:
   _REGION: us-central1
   _REPOSITORY: applemusic-spotify-link
 
-serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/cloud-build@$PROJECT_ID.iam.gserviceaccount.com'
+serviceAccount: 'projects/${PROJECT_ID}/serviceAccounts/trae-322@apple-music-to-spotify.iam.gserviceaccount.com'
 
 options:
   logging: CLOUD_LOGGING_ONLY
 
 images:
   - 'gcr.io/${PROJECT_ID}/backend'
-  - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/frontend'
+  - 'gcr.io/${PROJECT_ID}/frontend'
