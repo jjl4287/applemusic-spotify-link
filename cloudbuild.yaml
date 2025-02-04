@@ -9,6 +9,8 @@ steps:
     entrypoint: npm
     args: ['test']
     dir: 'node-version/packages/backend'
+    env:
+      - 'NODE_OPTIONS=--experimental-vm-modules'
 
   # Build the backend image
   - name: 'gcr.io/cloud-builders/docker'
