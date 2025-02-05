@@ -12,10 +12,10 @@ class SpotifyService {
       const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
       if (!clientId || !clientSecret) {
-        throw new Error('SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET environment variables are required');
+        throw new Error('Failed to retrieve Spotify credentials from Secret Manager');
       }
 
-      console.log('Initializing Spotify service with client ID from Secret Manager');
+      console.log('Initializing Spotify service with credentials from Secret Manager');
       this.spotifyApi = new SpotifyWebApi({
         clientId,
         clientSecret

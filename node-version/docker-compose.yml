@@ -21,8 +21,8 @@ services:
       - "8080:8080"
     environment:
       - NODE_ENV=development
-      - SPOTIFY_CLIENT_ID=63bf788707cc4f2b8d08f3a92f6837c0
-      - SPOTIFY_CLIENT_SECRET=6aa53cbdf3064c019e76ef6d1621bb87
+      - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
+      - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
       interval: 30s

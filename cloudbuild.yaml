@@ -5,6 +5,24 @@ steps:
     args: ['install', '--legacy-peer-deps']
     dir: 'node-version/packages/backend'
 
+  # Install frontend dependencies
+  - name: 'node:18'
+    entrypoint: npm
+    args: ['install', '--legacy-peer-deps']
+    dir: 'node-version/packages/frontend'
+
+  # Build backend
+  - name: 'node:18'
+    entrypoint: npm
+    args: ['run', 'build']
+    dir: 'node-version/packages/backend'
+
+  # Build frontend
+  - name: 'node:18'
+    entrypoint: npm
+    args: ['run', 'build']
+    dir: 'node-version/packages/frontend'
+
   # Build the backend image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'us-central1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/backend', '.']
@@ -36,8 +54,10 @@ steps:
       - '--allow-unauthenticated'
       - '--service-account'
       - '967436713449-compute@developer.gserviceaccount.com'
-      - '--set-secrets'
-      - 'SPOTIFY_CLIENT_ID=spotify-client-id:latest,SPOTIFY_CLIENT_SECRET=spotify-client-secret:latest'
+      - '--set-env-vars'
+      - 'SPOTIFY_CLIENT_ID=$(gcloud secrets versions access latest --secret=spotify-client-id)'
+      - '--set-env-vars'
+      - 'SPOTIFY_CLIENT_SECRET=$(gcloud secrets versions access latest --secret=spotify-client-secret)'
 
   # Deploy frontend service to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
