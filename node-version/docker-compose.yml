@@ -21,8 +21,9 @@ services:
       - "8080:8080"
     environment:
       - NODE_ENV=development
-      - SPOTIFY_CLIENT_ID=${SPOTIFY_CLIENT_ID}
-      - SPOTIFY_CLIENT_SECRET=${SPOTIFY_CLIENT_SECRET}
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - SPOTIFY_CLIENT_ID_SECRET_NAME=projects/${GOOGLE_CLOUD_PROJECT}/secrets/spotify-client-id/versions/latest
+      - SPOTIFY_CLIENT_SECRET_SECRET_NAME=projects/${GOOGLE_CLOUD_PROJECT}/secrets/spotify-client-secret/versions/latest
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
       interval: 30s

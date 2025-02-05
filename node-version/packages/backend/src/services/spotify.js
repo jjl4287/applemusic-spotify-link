@@ -8,8 +8,21 @@ class SpotifyService {
 
   async initialize() {
     try {
-      const clientId = process.env.SPOTIFY_CLIENT_ID;
-      const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+      const {SecretManagerServiceClient} = require('@google-cloud/secret-manager');
+      const client = new SecretManagerServiceClient();
+
+      const clientIdName = process.env.SPOTIFY_CLIENT_ID_SECRET_NAME;
+      const clientSecretName = process.env.SPOTIFY_CLIENT_SECRET_SECRET_NAME;
+
+      if (!clientIdName || !clientSecretName) {
+        throw new Error('Secret names not properly configured');
+      }
+
+      const [clientIdResponse] = await client.accessSecretVersion({ name: clientIdName });
+      const [clientSecretResponse] = await client.accessSecretVersion({ name: clientSecretName });
+
+      const clientId = clientIdResponse.payload.data.toString('utf8');
+      const clientSecret = clientSecretResponse.payload.data.toString('utf8');
 
       if (!clientId || !clientSecret) {
         throw new Error('Failed to retrieve Spotify credentials from Secret Manager');
@@ -21,13 +34,32 @@ class SpotifyService {
         clientSecret
       });
 
-      const data = await this.spotifyApi.clientCredentialsGrant();
-      this.spotifyApi.setAccessToken(data.body.access_token);
+      await this.refreshAccessToken();
       console.log('Successfully initialized Spotify service');
-      // Set up token refresh before it expires
-      setTimeout(() => this.initialize(), (data.body.expires_in - 60) * 1000);
     } catch (error) {
       console.error('Error initializing Spotify service:', error);
+      throw error;
+    }
+  }
+
+  async refreshAccessToken() {
+    try {
+      const data = await this.spotifyApi.clientCredentialsGrant();
+      this.spotifyApi.setAccessToken(data.body.access_token);
+      
+      // Set up token refresh before it expires
+      const refreshTimeout = (data.body.expires_in - 60) * 1000;
+      setTimeout(async () => {
+        try {
+          await this.refreshAccessToken();
+        } catch (error) {
+          console.error('Error refreshing access token:', error);
+          // Attempt to reinitialize the service
+          await this.initialize();
+        }
+      }, refreshTimeout);
+    } catch (error) {
+      console.error('Error getting access token:', error);
       throw error;
     }
   }
@@ -68,6 +100,15 @@ class SpotifyService {
 
   async searchTrack(title, artist) {
     try {
+      if (!this.spotifyApi) {
+        throw new Error('Spotify API client not initialized');
+      }
+
+      if (!title || !artist) {
+        console.warn('Missing title or artist for track search');
+        return null;
+      }
+
       // Sanitize the title before searching
       const sanitizedTitle = this.sanitizeTrackName(title);
       const sanitizedArtist = this.sanitizeTrackName(artist);
@@ -76,10 +117,22 @@ class SpotifyService {
       const exactQuery = `track:"${sanitizedTitle}" artist:"${sanitizedArtist}"`;
       let response = await this.spotifyApi.searchTracks(exactQuery, { limit: 50 });
       
+      // Validate response structure
+      if (!response?.body?.tracks?.items) {
+        console.warn('Invalid response structure from Spotify API');
+        return null;
+      }
+      
       // If no results, try a more lenient search
       if (!response.body.tracks.items.length) {
         const lenientQuery = `${sanitizedTitle} ${sanitizedArtist}`;
         response = await this.spotifyApi.searchTracks(lenientQuery, { limit: 50 });
+        
+        // Validate lenient search response
+        if (!response?.body?.tracks?.items) {
+          console.warn('Invalid response structure from Spotify API during lenient search');
+          return null;
+        }
       }
       
       if (!response.body.tracks.items.length) {
@@ -156,6 +209,15 @@ class SpotifyService {
 
   async searchAlbum(title, artist) {
     try {
+      if (!this.spotifyApi) {
+        throw new Error('Spotify API client not initialized');
+      }
+
+      if (!title || !artist) {
+        console.warn('Missing title or artist for album search');
+        return null;
+      }
+
       // Sanitize inputs
       const sanitizedTitle = this.sanitizeTrackName(title);
       const sanitizedArtist = this.sanitizeTrackName(artist);
@@ -164,10 +226,22 @@ class SpotifyService {
       const exactQuery = `album:"${sanitizedTitle}" artist:"${sanitizedArtist}"`;
       let response = await this.spotifyApi.searchAlbums(exactQuery, { limit: 50 });
       
+      // Validate response structure
+      if (!response?.body?.albums?.items) {
+        console.warn('Invalid response structure from Spotify API');
+        return null;
+      }
+      
       // If no results, try a more lenient search
       if (!response.body.albums.items.length) {
         const lenientQuery = `${sanitizedTitle} ${sanitizedArtist}`;
         response = await this.spotifyApi.searchAlbums(lenientQuery, { limit: 50 });
+        
+        // Validate lenient search response
+        if (!response?.body?.albums?.items) {
+          console.warn('Invalid response structure from Spotify API during lenient search');
+          return null;
+        }
       }
       
       if (!response.body.albums.items.length) {
