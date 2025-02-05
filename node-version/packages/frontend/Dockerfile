@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine as build
+FROM node:18-alpine as builder
 
 WORKDIR /app
 
@@ -19,16 +19,16 @@ RUN npm run build
 FROM nginx:alpine
 
 # Copy built files from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy nginx configuration
-COPY nginx.conf /etc/nginx/templates/default.conf.template
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port
 EXPOSE 8080
 
-# Start nginx with template processing
-CMD ["sh", "-c", "envsubst '${BACKEND_URL}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+# Configure nginx to run on port 8080 for Cloud Run
+RUN sed -i 's/listen\s*80;/listen 8080;/g' /etc/nginx/conf.d/default.conf
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]

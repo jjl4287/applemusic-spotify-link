@@ -2,7 +2,7 @@ steps:
   # Install backend dependencies
   - name: 'node:18'
     entrypoint: npm
-    args: ['install']
+    args: ['install', '--legacy-peer-deps']
     dir: 'node-version/packages/backend'
 
   # Build the backend image
@@ -29,13 +29,13 @@ steps:
     args:
       - 'run'
       - 'deploy'
-      - 'applemusic-spotify-backend'
+      - 'backend'
       - '--image=us-central1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/backend'
       - '--region=${_REGION}'
       - '--platform=managed'
       - '--allow-unauthenticated'
       - '--service-account'
-      - 'trae-322@apple-music-to-spotify.iam.gserviceaccount.com'
+      - '967436713449-compute@developer.gserviceaccount.com'
       - '--set-secrets'
       - 'SPOTIFY_CLIENT_ID=spotify-client-id:latest,SPOTIFY_CLIENT_SECRET=spotify-client-secret:latest'
 
@@ -45,21 +45,23 @@ steps:
     args:
       - 'run'
       - 'deploy'
-      - 'applemusic-spotify-frontend'
+      - 'frontend'
       - '--image=us-central1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/frontend'
       - '--region=${_REGION}'
       - '--platform=managed'
       - '--allow-unauthenticated'
-      - '--set-env-vars=BACKEND_URL=$(gcloud run services describe applemusic-spotify-backend --region=${_REGION} --format="value(status.url)")/api'
+      - '--set-env-vars=BACKEND_URL=$(gcloud run services describe backend --region=${_REGION} --format="value(status.url)")/api'
 
 substitutions:
   _REGION: us-central1
-  _REPOSITORY: applemusic-spotify-link
 
-serviceAccount: 'projects/${PROJECT_ID}/serviceAccounts/trae-322@apple-music-to-spotify.iam.gserviceaccount.com'
+serviceAccount: 'projects/${PROJECT_ID}/serviceAccounts/967436713449-compute@developer.gserviceaccount.com'
 
 options:
   logging: CLOUD_LOGGING_ONLY
+  env:
+    - 'CLOUDSDK_CORE_PROJECT=${PROJECT_ID}'
+    - 'GOOGLE_APPLICATION_CREDENTIALS=/workspace/key.json'
 
 images:
   - 'us-central1-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/backend'
